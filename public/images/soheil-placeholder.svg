@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" role="img" aria-label="Placeholder portrait">
+  <!-- تصویر موقت: این فایل را با عکس واقعی خود (PNG بدون پس‌زمینه) جایگزین کنید -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3a46"/>
+      <stop offset="1" stop-color="#121218"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <!-- shoulders / torso -->
+  <path d="M40 900 C40 700 140 610 230 590 L370 590 C460 610 560 700 560 900 Z" fill="url(#body)" stroke="url(#rim)" stroke-width="3" stroke-opacity=".7"/>
+  <!-- neck -->
+  <path d="M255 500 L345 500 L355 600 C330 625 270 625 245 600 Z" fill="#26262f"/>
+  <!-- head -->
+  <ellipse cx="300" cy="390" rx="120" ry="150" fill="url(#body)" stroke="url(#rim)" stroke-width="3" stroke-opacity=".7"/>
+  <!-- headphones band -->
+  <path d="M168 400 C160 230 440 230 432 400" fill="none" stroke="#0c0c10" stroke-width="26" stroke-linecap="round"/>
+  <path d="M168 400 C160 230 440 230 432 400" fill="none" stroke="url(#rim)" stroke-width="3" stroke-opacity=".8"/>
+  <!-- ear cups -->
+  <rect x="150" y="370" width="48" height="90" rx="22" fill="#0c0c10" stroke="url(#rim)" stroke-width="3"/>
+  <rect x="402" y="370" width="48" height="90" rx="22" fill="#0c0c10" stroke="url(#rim)" stroke-width="3"/>
+</svg>
+

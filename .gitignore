@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+
+/data/*.db
+/data/*.db-*
+/media
+/files
+/deploy
+.env
+.env.production
+*.log
+/data/*
+!/data/.gitkeep
