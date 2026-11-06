@@ -2,6 +2,7 @@
 # Daily backup of the database and uploads → /srv/soheil/backups (kept 14 days).
 # Installed as /usr/local/bin/soheil-backup, run by /etc/cron.d/soheil-backup as user "soheil".
 set -euo pipefail
+umask 077  # backups contain password hashes — owner-only
 APP=/srv/soheil/app
 DEST=/srv/soheil/backups
 STAMP=$(date +%Y%m%d-%H%M)

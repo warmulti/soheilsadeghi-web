@@ -1,2 +1,2 @@
-# /etc/cron.d/soheil-backup — daily at 03:30 server time
+# /etc/cron.d/soheil-backup — daily at 03:30 server time (UTC = 07:00 Tehran)
 30 3 * * * soheil /usr/local/bin/soheil-backup >/dev/null 2>&1
