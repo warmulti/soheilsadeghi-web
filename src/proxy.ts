@@ -5,10 +5,23 @@ import { NextResponse, type NextRequest } from "next/server";
  *   /             → Persian (internally /fa)
  *   /en/…         → English
  *   /fa/…         → redirected to the unprefixed URL, so every page has one canonical address
- * Admin, API, Next internals and files (anything with a dot) are left alone by the matcher.
+ *   /admin/…      → untouched, except that the panel opens in Persian until someone picks English
+ * API, Next internals and files (anything with a dot) are left alone by the matcher.
  */
+const ADMIN_LANG_COOKIE = "payload-lng";
+
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (request.cookies.has(ADMIN_LANG_COOKIE)) return NextResponse.next();
+    // Payload otherwise follows the browser's language (often English even for Persian speakers).
+    const headers = new Headers(request.headers);
+    headers.set("accept-language", "fa");
+    const response = NextResponse.next({ request: { headers } });
+    response.cookies.set(ADMIN_LANG_COOKIE, "fa", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    return response;
+  }
 
   if (pathname === "/fa" || pathname.startsWith("/fa/")) {
     const url = request.nextUrl.clone();
@@ -32,5 +45,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!admin|api|_next|.*\\..*).*)"],
+  matcher: ["/((?!api|_next|.*\\..*).*)"],
 };

@@ -4,11 +4,12 @@ import config from "@payload-config";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { buildBookingMessage, parseBooking, serviceLabel, type ContactApiResponse } from "@/lib/booking";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { notifyOwner, siteUrl } from "@/payload/email";
 
 /**
  * Booking / consultation requests.
- * Every request is saved in the admin panel (Inbox → Contact requests). With TELEGRAM_BOT_TOKEN +
- * TELEGRAM_CHAT_ID set, Soheil also gets an instant Telegram notification.
+ * Every request is saved in the admin panel (Inbox → Contact requests). Soheil is also notified by
+ * email (NOTIFY_EMAIL, when a mail server is set) and/or Telegram (TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID).
  */
 export async function POST(req: Request) {
   if (!rateLimit(`contact:${clientIp(req)}`, 5, 10 * 60_000)) {
@@ -47,7 +48,15 @@ export async function POST(req: Request) {
     console.error("[contact] could not save request:", err);
   }
 
-  let delivered = false;
+  const message = buildBookingMessage(d, form);
+  let delivered = await notifyOwner(payload, {
+    subject: `درخواست جدید: ${serviceLabel(form, d.service)} — ${d.name}`,
+    title: "درخواست جدید از فرم تماس سایت",
+    lines: message.split("\n").filter((line) => line.trim()),
+    button: { label: "دیدن درخواست‌ها در پنل", url: `${siteUrl()}/admin/collections/requests` },
+    replyTo: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact) ? d.contact : undefined,
+  });
+
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (token && chatId) {
@@ -55,7 +64,7 @@ export async function POST(req: Request) {
       const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text: buildBookingMessage(d, form), link_preview_options: { is_disabled: true } }),
+        body: JSON.stringify({ chat_id: chatId, text: message, link_preview_options: { is_disabled: true } }),
         signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) throw new Error(`Telegram API ${res.status}: ${(await res.text()).slice(0, 200)}`);

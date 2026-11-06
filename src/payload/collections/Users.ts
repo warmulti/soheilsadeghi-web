@@ -1,8 +1,13 @@
 import type { CollectionConfig } from "payload";
 import { isAdmin, isAdminField, isStaffField, isStaffUser, roleOf } from "../access.ts";
 import { label, sel, text } from "../fields.ts";
+import { localeOfReq, mailEnabled, resetPasswordEmail, verificationEmail } from "../email.ts";
 
-const serverUrl = () => process.env.SERVER_URL || "http://localhost:3000";
+/**
+ * Accounts that need no email confirmation: made by staff in the panel, or created while no mail
+ * server is configured (otherwise nobody could ever confirm them).
+ */
+const confirmedOnCreate = (user: unknown) => isStaffUser(user) || !mailEnabled();
 
 export const Users: CollectionConfig = {
   slug: "users",
@@ -18,15 +23,15 @@ export const Users: CollectionConfig = {
     lockTime: 15 * 60 * 1000,
     cookies: { sameSite: "Lax", secure: process.env.NODE_ENV === "production" },
     forgotPassword: {
-      generateEmailSubject: () => "بازیابی رمز عبور | DJ Soheil",
-      generateEmailHTML: (args) => {
-        const link = `${serverUrl()}/reset-password?token=${encodeURIComponent(args?.token ?? "")}`;
-        return `<div dir="rtl" style="font-family:Tahoma,sans-serif;line-height:2">
-          <p>سلام،</p><p>برای تعیین رمز عبور جدید روی لینک زیر بزنید:</p>
-          <p><a href="${link}">${link}</a></p>
-          <p style="color:#888">اگر این درخواست را شما نداده‌اید، این ایمیل را نادیده بگیرید.</p>
-          <hr><p dir="ltr">To reset your password open the link above.</p></div>`;
-      },
+      generateEmailSubject: (args) => resetPasswordEmail(localeOfReq(args?.req), "").subject,
+      generateEmailHTML: (args) => resetPasswordEmail(localeOfReq(args?.req), args?.token ?? "").html,
+    },
+    // Self-registered students confirm their email before they can log in.
+    // The very first admin and accounts in `confirmedOnCreate` are confirmed automatically.
+    verify: {
+      generateEmailSubject: ({ req }) => verificationEmail(localeOfReq(req), "").subject,
+      generateEmailHTML: ({ req, token, user }) =>
+        verificationEmail(localeOfReq(req), token, (user as { name?: string } | undefined)?.name).html,
     },
   },
   access: {
@@ -39,13 +44,23 @@ export const Users: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    beforeOperation: [
+      async ({ args, operation, req }) => {
+        if (operation !== "create") return args;
+        const first = (await req.payload.count({ collection: "users", overrideAccess: true })).totalDocs === 0;
+        return first || confirmedOnCreate(req.user) ? { ...args, disableVerificationEmail: true } : args;
+      },
+    ],
     beforeChange: [
       async ({ data, operation, req }) => {
         if (operation !== "create") return data;
         const { totalDocs } = await req.payload.count({ collection: "users", overrideAccess: true });
-        if (totalDocs === 0) return { ...data, role: "admin" }; // very first account = site owner
-        if (roleOf(req.user) !== "admin") return { ...data, role: "student", groups: isStaffUser(req.user) ? data.groups : [] };
-        return data;
+        if (totalDocs === 0) return { ...data, role: "admin", _verified: true }; // very first account = site owner
+        const verified = confirmedOnCreate(req.user) ? { _verified: true } : {};
+        if (roleOf(req.user) !== "admin") {
+          return { ...data, ...verified, role: "student", groups: isStaffUser(req.user) ? data.groups : [] };
+        }
+        return { ...data, ...verified };
       },
     ],
   },

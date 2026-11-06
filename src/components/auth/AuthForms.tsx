@@ -52,10 +52,21 @@ function Field({
 
 function ErrorBox({ state, t }: { state: AuthState; t: T }) {
   if (!state.error) return null;
+  // "unverified" isn't really a failure: the confirmation link was just sent again.
+  if (state.error === "unverified") return <Notice>{t.errors.unverified}</Notice>;
   return (
     <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
       {t.errors[state.error]}
     </p>
+  );
+}
+
+function Notice({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div role="status" className="rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-4 text-sm leading-7 text-cyan-50">
+      {title && <p className="mb-1 font-bold text-white">{title}</p>}
+      <p>{children}</p>
+    </div>
   );
 }
 
@@ -94,6 +105,18 @@ export function LoginForm({ locale, t, next }: { locale: Locale; t: T; next?: st
 
 export function RegisterForm({ locale, t }: { locale: Locale; t: T }) {
   const [state, action, pending] = useActionState(registerAction, {});
+  if (state.done) {
+    const [before, after] = t.registerSent.split("{email}");
+    return (
+      <Notice title={t.registerSentTitle}>
+        {before}
+        <bdi dir="ltr" className="font-bold text-white">
+          {state.values?.email}
+        </bdi>
+        {after}
+      </Notice>
+    );
+  }
   return (
     <form action={action} className="grid gap-5">
       <input type="hidden" name="locale" value={locale} />
@@ -115,13 +138,7 @@ export function RegisterForm({ locale, t }: { locale: Locale; t: T }) {
 
 export function ForgotForm({ locale, t }: { locale: Locale; t: T }) {
   const [state, action, pending] = useActionState(forgotAction, {});
-  if (state.done) {
-    return (
-      <p role="status" className="rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-4 text-sm leading-7 text-cyan-50">
-        {t.forgotSent}
-      </p>
-    );
-  }
+  if (state.done) return <Notice>{t.forgotSent}</Notice>;
   return (
     <form action={action} className="grid gap-5">
       <input type="hidden" name="locale" value={locale} />

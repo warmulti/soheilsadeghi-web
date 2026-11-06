@@ -61,3 +61,30 @@
   font-weight: 700;
   font-size: 0.85rem;
 }
+
+/* فارسی ⇄ English switch (header + login screen) */
+.dj-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 999px;
+  background: var(--theme-elevation-50);
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-inline: 0.75rem;
+}
+
+.dj-lang-toggle:hover {
+  border-color: #22d3ee;
+}
+
+.dj-lang-login {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}

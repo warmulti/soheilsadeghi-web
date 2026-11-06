@@ -51,15 +51,27 @@ if (databaseUri.startsWith("file:")) {
   fs.mkdirSync(path.dirname(path.resolve(process.cwd(), databaseUri.slice("file:".length))), { recursive: true });
 }
 
-const smtp = process.env.SMTP_HOST
+/**
+ * Outgoing email (sign-up confirmation, password reset, notifications).
+ * On the server this is the local Postfix (SMTP_HOST=127.0.0.1, port 25, no login); an external
+ * provider works too (port 465/587 with SMTP_USER / SMTP_PASS).
+ */
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = Number(process.env.SMTP_PORT || (smtpHost && isLoopback(smtpHost) ? 25 : 465));
+function isLoopback(host: string) {
+  return host === "localhost" || host === "::1" || host.startsWith("127.");
+}
+const smtp = smtpHost
   ? nodemailerAdapter({
       defaultFromAddress: process.env.SMTP_FROM || process.env.SMTP_USER || "no-reply@soheilsadeghi.com",
       defaultFromName: "DJ Soheil",
       transportOptions: {
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 465),
-        secure: Number(process.env.SMTP_PORT || 465) === 465,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        // Mail to a server on this same machine never leaves it, so TLS adds nothing there.
+        ignoreTLS: isLoopback(smtpHost),
+        auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
       },
     })
   : undefined;
@@ -74,6 +86,9 @@ export default buildConfig({
     components: {
       graphics: { Logo: "/payload/components/Brand#Logo", Icon: "/payload/components/Brand#Icon" },
       beforeDashboard: ["/payload/components/Welcome#Welcome"],
+      // فارسی ⇄ English switch in the panel header and above the login form
+      actions: ["/payload/components/LanguageToggle#LanguageToggle"],
+      beforeLogin: ["/payload/components/LanguageToggle#LoginLanguageToggle"],
     },
     dateFormat: "yyyy/MM/dd HH:mm",
   },

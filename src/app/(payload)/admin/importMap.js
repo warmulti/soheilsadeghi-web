@@ -24,7 +24,9 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { RowLabel as RowLabel_7c3fc7ee1cd12f35fe6e1529dc16cb04 } from '../../../payload/components/RowLabel'
 import { Icon as Icon_9abc6a0eda54972459e8ec55822fafb2 } from '../../../payload/components/Brand'
 import { Logo as Logo_9abc6a0eda54972459e8ec55822fafb2 } from '../../../payload/components/Brand'
+import { LanguageToggle as LanguageToggle_d715d058737191d0e46d2d691a26810f } from '../../../payload/components/LanguageToggle'
 import { Welcome as Welcome_8c9ad69834c2729c41398e271ea18897 } from '../../../payload/components/Welcome'
+import { LoginLanguageToggle as LoginLanguageToggle_d715d058737191d0e46d2d691a26810f } from '../../../payload/components/LanguageToggle'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -55,6 +57,8 @@ export const importMap = {
   "/payload/components/RowLabel#RowLabel": RowLabel_7c3fc7ee1cd12f35fe6e1529dc16cb04,
   "/payload/components/Brand#Icon": Icon_9abc6a0eda54972459e8ec55822fafb2,
   "/payload/components/Brand#Logo": Logo_9abc6a0eda54972459e8ec55822fafb2,
+  "/payload/components/LanguageToggle#LanguageToggle": LanguageToggle_d715d058737191d0e46d2d691a26810f,
   "/payload/components/Welcome#Welcome": Welcome_8c9ad69834c2729c41398e271ea18897,
+  "/payload/components/LanguageToggle#LoginLanguageToggle": LoginLanguageToggle_d715d058737191d0e46d2d691a26810f,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

@@ -13,6 +13,7 @@
 | سرویس | `soheil-site` (systemd) — Node.js 22، فقط روی `127.0.0.1:3000` |
 | وب‌سرور | Nginx → HTTPS با گواهی Let's Encrypt (تمدید خودکار)؛ `www` و `http` به `https://soheilsadeghi.com` ریدایرکت می‌شوند |
 | فایروال | UFW: فقط SSH، HTTP و HTTPS باز است. fail2ban جلوی حمله به SSH را می‌گیرد |
+| ایمیل | Postfix + OpenDKIM، فقط برای ارسال و فقط از داخل خود سرور (`127.0.0.1`). جزئیات: بخش «ایمیل سایت» |
 | پشتیبان | هر روز ساعت ۳:۳۰ UTC (۷ صبح تهران) در `/srv/soheil/backups` (۱۴ روز نگه داشته می‌شود) |
 
 نسخه کامل همه فایل‌های تنظیمات سرور در پوشه [`ops/`](ops) همین مخزن است.
@@ -41,14 +42,42 @@ sudo soheil-update
 | لیست پشتیبان‌ها | `ls -lh /srv/soheil/backups` |
 | ویرایش تنظیمات (ایمیل، کلید AI…) | `sudo nano /etc/soheil/site.env` و بعد ری‌استارت |
 | وضعیت گواهی SSL | `sudo certbot certificates` |
+| وضعیت ایمیل و رکوردهای DNS | `sudo soheil-mail status` |
+| ایمیل آزمایشی | `sudo soheil-mail test you@gmail.com` |
+| روشن / خاموش کردن ایمیل سایت | `sudo soheil-mail on` / `sudo soheil-mail off` |
+| آخرین ایمیل‌های ارسال‌شده | `sudo soheil-mail log` |
 
 ## تنظیمات اختیاری (`/etc/soheil/site.env`)
 
 بعد از هر تغییر: `sudo systemctl restart soheil-site`. فهرست کامل و توضیح هر متغیر در [`.env.example`](.env.example) است.
 
-- **ایمیل بازیابی رمز:** `SMTP_HOST`، `SMTP_PORT`، `SMTP_USER`، `SMTP_PASS`، `SMTP_FROM` (مثلاً ایمیل Gmail با App Password یا هر سرویس SMTP).
+- **ایمیل:** با `sudo soheil-mail on` تنظیم می‌شود (بخش بعد). مقصد اعلان‌ها: `NOTIFY_EMAIL` (پیش‌فرض: `ADMIN_EMAIL`).
 - **چت هوشمند:** `ANTHROPIC_API_KEY` یا `GEMINI_API_KEY`.
 - ⚠️ **تلگرام:** API تلگرام از این سرور مسدود است، پس اطلاع‌رسانی ربات تلگرام برای فرم تماس کار نمی‌کند. درخواست‌ها همیشه در پنل (بخش «درخواست‌ها») ذخیره می‌شوند.
+
+## ایمیل سایت
+
+سرور ایمیل خود سایت این ایمیل‌ها را می‌فرستد:
+
+- لینک تأیید ایمیل بعد از ثبت‌نام هنرجو
+- بازیابی رمز عبور
+- خبر ثبت‌نام هنرجوی جدید و درخواست‌های فرم تماس، به ایمیل سهیل
+
+همه ایمیل‌ها از آدرس `no-reply@soheilsadeghi.com` و به زبان بازدیدکننده ارسال می‌شوند.
+
+**راه‌اندازی (یک بار):**
+
+1. `sudo soheil-mail status` را اجرا کنید. چهار رکورد DNS را عیناً در Cloudflare اضافه کنید: **DNS → Records → Add record**، با Proxy status روی **DNS only**.
+2. از پشتیبانی هاست (Asiatech) بخواهید **Reverse DNS (PTR)** آی‌پی `46.245.89.47` را روی `mail.soheilsadeghi.com` بگذارند.
+3. چند دقیقه بعد دوباره `sudo soheil-mail status` را اجرا کنید تا همه موارد ✔ شوند. بعد بزنید `sudo soheil-mail test آدرس-جیمیل-خودتان`. باید `status=sent` ببینید.
+4. `sudo soheil-mail on` را اجرا کنید. از این به بعد هنرجوی جدید باید ایمیلش را تأیید کند تا بتواند وارد شود.
+
+**نکته‌ها:**
+
+- **حساب‌های ساخته‌شده در پنل:** هنرجویی که مدیر در پنل می‌سازد نیازی به تأیید ندارد. مدیر می‌تواند هر حساب را دستی هم تأییدشده کند (تیک «تأیید شده» در صفحه کاربر).
+- **وقتی ایمیل خاموش است** (`soheil-mail off`): ثبت‌نام بدون تأیید انجام می‌شود، ولی بازیابی رمز با ایمیل کار نمی‌کند.
+- **اگر هنرجو ایمیل را نگرفت:** با ورود به حساب، لینک تأیید دوباره ارسال می‌شود (حداکثر هر ۱۰ دقیقه یک بار). پوشه اسپم را هم ببیند.
+- **امنیت:** پورت ۲۵ در فایروال بسته است. سرور ایمیل فقط از داخل خود سرور ایمیل قبول می‌کند و راهی برای سوءاستفاده از بیرون ندارد.
 
 ## بازگردانی پشتیبان
 
@@ -77,6 +106,7 @@ certbot certonly --nginx -d soheilsadeghi.com -d www.soheilsadeghi.com --deploy-
 ln -s /etc/nginx/sites-available/soheilsadeghi.com /etc/nginx/sites-enabled/ && systemctl reload nginx
 install -m 755 ops/soheil-backup.sh /usr/local/bin/soheil-backup && install -m 755 ops/soheil-update.sh /usr/local/bin/soheil-update
 cp ops/cron.soheil-backup /etc/cron.d/soheil-backup
+bash ops/mail/setup-mail.sh   # سرور ایمیل؛ رکوردهای DNS را چاپ می‌کند → بعد: soheil-mail on
 ufw allow OpenSSH && ufw allow "Nginx Full" && ufw enable
 ```
 

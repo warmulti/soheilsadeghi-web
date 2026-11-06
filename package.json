@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "generate:types": "payload generate:types --disable-transpile",
     "generate:importmap": "payload generate:importmap --disable-transpile",
-    "migrate:create": "payload migrate:create --disable-transpile && node scripts/fix-migration-imports.mjs",
+    "migrate:create": "node scripts/migrate-create.mjs",
     "payload": "payload --disable-transpile",
     "package:cpanel": "next build && node scripts/package-cpanel.mjs",
     "migrate": "payload migrate --disable-transpile"
