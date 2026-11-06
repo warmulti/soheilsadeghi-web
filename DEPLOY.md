@@ -99,7 +99,7 @@ apt-get install -y nodejs nginx certbot python3-certbot-nginx sqlite3 fail2ban  
 useradd --system --create-home --home-dir /srv/soheil --shell /usr/sbin/nologin soheil
 sudo -u soheil git clone https://github.com/warmulti/soheilsadeghi-web.git /srv/soheil/app
 # /etc/soheil/site.env را از روی .env.example بسازید (SERVER_URL، PAYLOAD_SECRET، ADMIN_EMAIL، ADMIN_PASSWORD…)
-sudo -u soheil bash -c 'cd /srv/soheil/app && set -a && . /etc/soheil/site.env && set +a && npm ci && npx next build'
+sudo -u soheil bash -c 'cd /srv/soheil/app && set -a && . /etc/soheil/site.env && set +a && npm ci --include=dev && npx next build'
 cp ops/soheil-site.service /etc/systemd/system/ && systemctl enable --now soheil-site
 cp ops/nginx/soheilsadeghi.com.conf /etc/nginx/sites-available/ && cp ops/nginx/soheil-*.conf /etc/nginx/snippets/
 certbot certonly --nginx -d soheilsadeghi.com -d www.soheilsadeghi.com --deploy-hook "systemctl reload nginx"
