@@ -15,7 +15,7 @@ npm run dev        # http://localhost:3000  — پنل: http://localhost:3000/ad
 
 ## انتشار روی هاست
 
-راهنمای کامل قدم‌به‌قدم: **[DEPLOY.md](DEPLOY.md)**. خلاصه: `npm run package:cpanel` و آپلود zip.
+سایت روی سرور Ubuntu اجرا می‌شود؛ ساختار سرور، به‌روزرسانی (`sudo soheil-update`) و پشتیبان‌گیری: **[DEPLOY.md](DEPLOY.md)**. راهنمای جایگزین برای هاست cPanel: [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md).
 
 ## پنل مدیریت (`/admin`)
 

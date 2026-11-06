@@ -1,100 +1,83 @@
-# راهنمای انتشار روی هاست cPanel — soheilsadeghi.com
+# سرور سایت — soheilsadeghi.com
 
-این راهنما قدم‌به‌قدم سایت را روی هاست cPanel با دامنه **soheilsadeghi.com** بالا می‌آورد.
+سایت روی یک سرور **Ubuntu 24.04** (IP: `46.245.89.47`) اجرا می‌شود. این فایل توضیح می‌دهد چه چیزی کجاست و کارهای روزمره را چطور انجام دهید.
+(راهنمای جایگزین برای هاست اشتراکی: [DEPLOY-CPANEL.md](DEPLOY-CPANEL.md))
 
-## ۰. پیش‌نیاز: هاست باید Node.js داشته باشد
+## ساختار سرور
 
-سایت (پنل مدیریت، ورود هنرجو، جستجو و دانلود) روی **Node.js** اجرا می‌شود، نه PHP.
+| بخش | جزئیات |
+| --- | --- |
+| برنامه | `/srv/soheil/app` — کپی همین مخزن GitHub، اجرا با کاربر سیستمی `soheil` |
+| داده‌ها | `/srv/soheil/app/data` (پایگاه داده)، `media/` (تصاویر)، `files/` (فایل‌های دانلودی) |
+| تنظیمات و رمزها | `/etc/soheil/site.env` (فقط root و کاربر soheil می‌خوانند) |
+| سرویس | `soheil-site` (systemd) — Node.js 22، فقط روی `127.0.0.1:3000` |
+| وب‌سرور | Nginx → HTTPS با گواهی Let's Encrypt (تمدید خودکار)؛ `www` و `http` به `https://soheilsadeghi.com` ریدایرکت می‌شوند |
+| فایروال | UFW: فقط SSH، HTTP و HTTPS باز است. fail2ban جلوی حمله به SSH را می‌گیرد |
+| پشتیبان | هر شب ساعت ۳:۳۰ در `/srv/soheil/backups` (۱۴ روز نگه داشته می‌شود) |
 
-1. وارد cPanel شوید.
-2. در بخش **Software** دنبال **Setup Node.js App** بگردید.
-   - **اگر هست:** روی آن بزنید، **Create Application** را باز کنید و لیست **Node.js version** را ببینید. نسخه **۲۲** یا **۲۰.۱۸ به بالا** لازم است.
-   - **اگر نیست یا نسخه قدیمی‌تر است:** از هاستینگ بخواهید Node.js App را فعال کند یا پلن را ارتقا دهد. راه دیگر یک VPS کوچک است.
-3. حافظه رم هاست بهتر است **حداقل ۱ گیگابایت** باشد.
-4. گواهی **SSL** برای دامنه لازم است. بدون https ورود به حساب کار نمی‌کند.
+نسخه کامل همه فایل‌های تنظیمات سرور در پوشه [`ops/`](ops) همین مخزن است.
 
-## ۱. ساخت بسته روی سیستم خودتان
+## به‌روزرسانی سایت بعد از تغییر کد
 
-در ترمینال VS Code داخل پوشه پروژه:
+1. تغییرات را روی GitHub (شاخه `main`) push کنید.
+2. با SSH وارد سرور شوید و اجرا کنید:
 
 ```bash
-npm run package:cpanel
+sudo soheil-update
 ```
 
-خروجی: فایلی مثل `deploy/soheil-cpanel-20261106-1759.zip` (حدود ۱۱ مگابایت).
+این دستور به ترتیب: پشتیبان می‌گیرد ← کد را از GitHub می‌گیرد ← نصب و بیلد می‌کند ← سرویس را ری‌استارت می‌کند. حدود ۲–۳ دقیقه طول می‌کشد. تغییرات پایگاه داده (migration) خودکار اعمال می‌شود و محتوای پنل دست نمی‌خورد.
 
-> `node_modules` عمداً داخل بسته نیست؛ روی خود سرور نصب می‌شود (سرور لینوکس است و نسخه لینوکسی ماژول‌ها را لازم دارد).
+> ویرایش متن‌ها، دانلودها، هنرجوها و… نیازی به این کار ندارد؛ همه از پنل `/admin` انجام می‌شود و فوراً روی سایت است.
 
-## ۲. دامنه و SSL
+## دستورات کاربردی (روی سرور)
 
-1. **DNS:** در پنل ثبت دامنه، Nameserverهای هاست را برای soheilsadeghi.com تنظیم کنید (یا رکورد A را به IP هاست بدهید). اعمالش ممکن است تا چند ساعت طول بکشد.
-2. **SSL:** در cPanel → **SSL/TLS Status** دکمه **Run AutoSSL** را بزنید تا برای `soheilsadeghi.com` و `www.soheilsadeghi.com` گواهی صادر شود.
-
-## ۳. ساخت اپلیکیشن Node.js
-
-cPanel → **Setup Node.js App** → **Create Application**:
-
-| فیلد | مقدار |
+| کار | دستور |
 | --- | --- |
-| Node.js version | بالاترین نسخه ۲۲ (یا ۲۰.۱۸ به بالا) |
-| Application mode | Production |
-| Application root | `soheil-site` (یک پوشه در Home؛ **نه** داخل public_html) |
-| Application URL | `soheilsadeghi.com` (خود دامنه، بدون مسیر) |
-| Application startup file | `server.cjs` |
+| وضعیت سایت | `systemctl status soheil-site` |
+| دیدن لاگ‌ها | `journalctl -u soheil-site -n 100 -f` |
+| ری‌استارت | `sudo systemctl restart soheil-site` |
+| پشتیبان فوری | `sudo -u soheil soheil-backup` |
+| لیست پشتیبان‌ها | `ls -lh /srv/soheil/backups` |
+| ویرایش تنظیمات (ایمیل، کلید AI…) | `sudo nano /etc/soheil/site.env` و بعد ری‌استارت |
+| وضعیت گواهی SSL | `sudo certbot certificates` |
 
-سپس در همان صفحه، بخش **Environment variables**، این متغیرها را اضافه کنید (توضیح کامل در `.env.example`):
+## تنظیمات اختیاری (`/etc/soheil/site.env`)
 
-| نام | مقدار |
-| --- | --- |
-| `SERVER_URL` | `https://soheilsadeghi.com` |
-| `PAYLOAD_SECRET` | یک رشته تصادفی بلند (۶۴+ کاراکتر) — دستور ساختش در `.env.example` هست |
-| `DATABASE_URI` | `file:./data/soheil.db` |
-| `ADMIN_EMAIL` | ایمیل خودتان |
-| `ADMIN_PASSWORD` | یک رمز قوی (بعد از اولین ورود پاکش کنید) |
-| `ADMIN_NAME` | `Soheil` |
+بعد از هر تغییر: `sudo systemctl restart soheil-site`. فهرست کامل و توضیح هر متغیر در [`.env.example`](.env.example) است.
 
-دکمه **Create** را بزنید.
+- **ایمیل بازیابی رمز:** `SMTP_HOST`، `SMTP_PORT`، `SMTP_USER`، `SMTP_PASS`، `SMTP_FROM` (مثلاً ایمیل Gmail با App Password یا هر سرویس SMTP).
+- **چت هوشمند:** `ANTHROPIC_API_KEY` یا `GEMINI_API_KEY`.
+- ⚠️ **تلگرام:** API تلگرام از این سرور مسدود است، پس اطلاع‌رسانی ربات تلگرام برای فرم تماس کار نمی‌کند. درخواست‌ها همیشه در پنل (بخش «درخواست‌ها») ذخیره می‌شوند.
 
-## ۴. آپلود و نصب
+## بازگردانی پشتیبان
 
-1. cPanel → **File Manager** → پوشه `soheil-site`.
-2. فایل zip را **Upload** کنید، روی آن راست‌کلیک کنید و **Extract** را بزنید. بعد خود zip را پاک کنید.
-3. به **Setup Node.js App** برگردید، اپ را **Edit** کنید و دکمه **Run NPM Install** را بزنید. چند دقیقه طول می‌کشد.
-   - اگر به ترمینال دسترسی دارید، این هم کار می‌کند: دستور `source` که بالای صفحه اپ نوشته شده را اجرا کنید، بعد `npm ci --omit=dev`.
-4. دکمه **Restart** را بزنید.
+```bash
+sudo systemctl stop soheil-site
+cd /srv/soheil/app
+sudo -u soheil cp data/soheil.db data/soheil.db.before-restore
+gunzip -c /srv/soheil/backups/soheil-YYYYMMDD-HHMM.db.gz | sudo -u soheil tee data/soheil.db >/dev/null
+sudo -u soheil tar -xzf /srv/soheil/backups/uploads-YYYYMMDD-HHMM.tar.gz -C /srv/soheil/app
+sudo systemctl start soheil-site
+```
 
-## ۵. اولین اجرا
+> پشتیبان‌ها روی همان سرور هستند؛ هر چند وقت یک بار پوشه `/srv/soheil/backups` را روی سیستم خودتان هم دانلود کنید (مثلاً با WinSCP).
 
-- `https://soheilsadeghi.com` را باز کنید. اولین بار حدود ۳۰ ثانیه طول می‌کشد، چون پایگاه داده ساخته می‌شود و محتوای فارسی و انگلیسی و عکس سهیل خودکار وارد می‌شود.
-- به `https://soheilsadeghi.com/admin` بروید و با `ADMIN_EMAIL` و `ADMIN_PASSWORD` وارد شوید.
-- **امنیت:** متغیر `ADMIN_PASSWORD` را از تنظیمات اپ پاک کنید و Restart بزنید. رمز را از داخل پنل (پروفایل خودتان) عوض کنید.
+## نصب از صفر روی یک سرور جدید (خلاصه)
 
-## ۶. ایمیل بازیابی رمز (پیشنهادی)
+```bash
+apt-get install -y nodejs nginx certbot python3-certbot-nginx sqlite3 fail2ban   # Node 22 از deb.nodesource.com
+useradd --system --create-home --home-dir /srv/soheil --shell /usr/sbin/nologin soheil
+sudo -u soheil git clone https://github.com/warmulti/soheilsadeghi-web.git /srv/soheil/app
+# /etc/soheil/site.env را از روی .env.example بسازید (SERVER_URL، PAYLOAD_SECRET، ADMIN_EMAIL، ADMIN_PASSWORD…)
+sudo -u soheil bash -c 'cd /srv/soheil/app && set -a && . /etc/soheil/site.env && set +a && npm ci && npx next build'
+cp ops/soheil-site.service /etc/systemd/system/ && systemctl enable --now soheil-site
+cp ops/nginx/soheilsadeghi.com.conf /etc/nginx/sites-available/ && cp ops/nginx/soheil-*.conf /etc/nginx/snippets/
+certbot certonly --nginx -d soheilsadeghi.com -d www.soheilsadeghi.com --deploy-hook "systemctl reload nginx"
+ln -s /etc/nginx/sites-available/soheilsadeghi.com /etc/nginx/sites-enabled/ && systemctl reload nginx
+install -m 755 ops/soheil-backup.sh /usr/local/bin/soheil-backup && install -m 755 ops/soheil-update.sh /usr/local/bin/soheil-update
+cp ops/cron.soheil-backup /etc/cron.d/soheil-backup
+ufw allow OpenSSH && ufw allow "Nginx Full" && ufw enable
+```
 
-برای اینکه «فراموشی رمز» ایمیل بفرستد:
-
-1. cPanel → **Email Accounts** → یک ایمیل مثل `no-reply@soheilsadeghi.com` بسازید.
-2. متغیرهای `SMTP_HOST`، `SMTP_PORT`، `SMTP_USER`، `SMTP_PASS` و `SMTP_FROM` را اضافه کنید و Restart بزنید. اطلاعات SMTP در cPanel → Email Accounts → **Connect Devices** هست.
-
-## ۷. به‌روزرسانی سایت در آینده
-
-1. روی سیستم خودتان `npm run package:cpanel`.
-2. zip جدید را در `soheil-site` آپلود و Extract کنید و اجازه دهید فایل‌ها جایگزین شوند.
-3. **پوشه‌های `data/`، `media/` و `files/` را هرگز پاک نکنید.** همه محتوا، کاربران و فایل‌های آپلودی شما در آن‌هاست. بسته جدید به آن‌ها دست نمی‌زند.
-4. اگر `package.json` تغییر کرده، **Run NPM Install** بزنید. سپس **Restart**. تغییرات پایگاه داده (migration) خودکار اعمال می‌شود.
-
-## ۸. پشتیبان‌گیری
-
-- cPanel → **Backup** (پشتیبان کامل Home)، یا
-- دانلود منظم این سه مورد: `data/soheil.db`، پوشه `media/` و پوشه `files/`.
-
-## ۹. عیب‌یابی
-
-| مشکل | راه‌حل |
-| --- | --- |
-| صفحه خطای 503 / سایت بالا نمی‌آید | فایل `stderr.log` در پوشه اپ را ببینید. اپ را Restart کنید. |
-| `PAYLOAD_SECRET is not set` | متغیر `PAYLOAD_SECRET` را اضافه کنید. |
-| ورود انجام می‌شود ولی دوباره به صفحه ورود برمی‌گردد | SSL فعال نیست یا `SERVER_URL` با آدرس سایت یکی نیست (https و بدون / انتهایی). |
-| آپلود فایل‌های بزرگ خطا می‌دهد | هاست حجم آپلود را محدود کرده؛ برای فایل‌های حجیم (نرم‌افزار، پادکست طولانی) در «دانلودها» گزینه **لینک خارجی** را انتخاب کنید. |
-| چت هوشمند یا اطلاع‌رسانی تلگرام کار نمی‌کند | بعضی هاست‌های ایرانی دسترسی به این سرویس‌ها را می‌بندند؛ چت خودکار به حالت پاسخ داخلی برمی‌گردد. |
-| حافظه کم (Out of memory) | پلن با رم بیشتر، یا محدودیت LVE را از پشتیبانی هاست بپرسید. |
+برای انتقال داده‌ها از سرور قبلی، پوشه‌های `data/`، `media/` و `files/` را کپی کنید.

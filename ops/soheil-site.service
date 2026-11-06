@@ -1,0 +1,27 @@
+# /etc/systemd/system/soheil-site.service
+[Unit]
+Description=DJ Soheil website (Next.js + Payload CMS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=soheil
+Group=soheil
+WorkingDirectory=/srv/soheil/app
+EnvironmentFile=/etc/soheil/site.env
+# Only reachable through Nginx on this machine (localhost resolves to 127.0.0.1).
+# Use "localhost", not "127.0.0.1": Next normalises 127.0.0.1 to localhost internally and
+# would otherwise treat the language rewrite in proxy.ts as an external URL.
+ExecStart=/usr/bin/node /srv/soheil/app/node_modules/next/dist/bin/next start -H localhost -p 3000
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/srv/soheil
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
