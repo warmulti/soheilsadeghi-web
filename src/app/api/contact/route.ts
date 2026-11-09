@@ -5,6 +5,7 @@ import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { buildBookingMessage, parseBooking, serviceLabel, type ContactApiResponse } from "@/lib/booking";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { notifyOwner, siteUrl } from "@/payload/email";
+import { notifyOwnerSms } from "@/lib/sms";
 
 /**
  * Booking / consultation requests.
@@ -56,6 +57,11 @@ export async function POST(req: Request) {
     button: { label: "دیدن درخواست‌ها در پنل", url: `${siteUrl()}/admin/collections/requests` },
     replyTo: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact) ? d.contact : undefined,
   });
+
+  // SMS notification for Soheil (sms.ir), independent of email/Telegram.
+  if (await notifyOwnerSms(`درخواست جدید سایت:\n${d.name}\n${serviceLabel(form, d.service)}\nتماس: ${d.contact}`)) {
+    delivered = true;
+  }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;

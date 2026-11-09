@@ -88,3 +88,32 @@
   justify-content: center;
   margin-bottom: 1.5rem;
 }
+
+/* Dashboard backup row */
+.dj-welcome__backup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgb(168 85 247 / 0.2);
+  font-size: 0.85rem;
+}
+
+.dj-welcome__backup span {
+  opacity: 0.7;
+}
+
+.dj-welcome__backup a {
+  padding: 0.45rem 0.95rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  color: var(--theme-text);
+  background: var(--theme-elevation-100);
+  border: 1px solid var(--theme-elevation-150);
+}
+
+.dj-welcome__backup a:hover {
+  border-color: #22d3ee;
+}

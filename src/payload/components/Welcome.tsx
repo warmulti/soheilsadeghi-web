@@ -30,6 +30,11 @@ export async function Welcome({ i18n, payload, user }: ServerProps) {
     payload.count({ collection: "users", where: { role: { equals: "student" } } }),
   ]);
   const name = (user as { name?: string } | undefined)?.name;
+  const isAdmin = (user as { role?: string } | undefined)?.role === "admin";
+  const backup =
+    lang === "fa"
+      ? { title: "پشتیبان‌گیری", full: "دانلود بکاپ کامل (zip)", db: "دانلود بکاپ دیتابیس (zip)" }
+      : { title: "Backup", full: "Download full backup (zip)", db: "Download database backup (zip)" };
   const stats =
     lang === "fa"
       ? [
@@ -66,6 +71,17 @@ export async function Welcome({ i18n, payload, user }: ServerProps) {
           </a>
         ))}
       </div>
+      {isAdmin && (
+        <div className="dj-welcome__backup">
+          <span>{backup.title}:</span>
+          <a href="/api/admin/backup?scope=full" download>
+            {backup.full}
+          </a>
+          <a href="/api/admin/backup?scope=db" download>
+            {backup.db}
+          </a>
+        </div>
+      )}
     </div>
   );
 }

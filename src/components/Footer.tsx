@@ -5,6 +5,9 @@ import type { ContactPage, Navigation, Setting } from "@/payload-types";
 import { instagramUrl, telegramUrl, whatsappUrl } from "@/lib/links";
 import { InstagramIcon, TelegramIcon, WhatsAppIcon } from "./icons";
 
+/** Fixed developer attribution — intentionally in code, not in the CMS, so it stays on every page. */
+const DEVELOPER = "Mohammad Ghannadi";
+
 type Props = {
   locale: Locale;
   settings: Setting;
@@ -64,7 +67,14 @@ export default function Footer({ locale, settings, nav, channels, t }: Props) {
         </div>
       </div>
       <div className="border-t border-white/5 py-5 text-center text-xs text-white/35">
-        © {new Date().getFullYear()} {settings.brandName} — {t.rights}
+        <p>
+          © {new Date().getFullYear()} <span dir="ltr">{settings.brandName}</span> — {t.rights}
+        </p>
+        {/* Developer credit — hardcoded here on purpose, not editable from the admin panel. */}
+        <p className="mt-1.5 text-white/25">
+          {locale === "fa" ? "طراحی و توسعه: " : "Design & development: "}
+          <span dir="ltr">{DEVELOPER}</span>
+        </p>
       </div>
     </footer>
   );

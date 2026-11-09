@@ -6,6 +6,7 @@ import config from "@payload-config";
 import { login, logout } from "@payloadcms/next/auth";
 import { href, isLocale, type Locale } from "@/i18n/config";
 import { mailEnabled, notifyOwner, siteUrl, verificationEmail } from "@/payload/email";
+import { notifyOwnerSms } from "@/lib/sms";
 import { rateLimit } from "@/lib/rate-limit";
 
 export type AuthErrorCode =
@@ -85,6 +86,7 @@ async function notifyNewStudent(payload: Payload, user: { id: number | string },
     button: { label: "باز کردن در پنل مدیریت", url: `${siteUrl()}/admin/collections/users/${user.id}` },
     replyTo: values.email,
   });
+  await notifyOwnerSms(`هنرجوی جدید ثبت‌نام کرد:\n${values.name}\n${values.email}${values.phone ? `\n${values.phone}` : ""}`);
 }
 
 export async function registerAction(_prev: AuthState, form: FormData): Promise<AuthState> {
