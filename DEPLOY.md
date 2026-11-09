@@ -12,8 +12,9 @@
 | تنظیمات و رمزها | `/etc/soheil/site.env` (فقط root و کاربر soheil می‌خوانند) |
 | سرویس | `soheil-site` (systemd) — Node.js 22، فقط روی `127.0.0.1:3000` |
 | وب‌سرور | Nginx → HTTPS با گواهی Let's Encrypt (تمدید خودکار)؛ `www` و `http` به `https://soheilsadeghi.com` ریدایرکت می‌شوند |
-| فایروال | UFW: فقط SSH، HTTP و HTTPS باز است. fail2ban جلوی حمله به SSH را می‌گیرد |
-| ایمیل | Postfix + OpenDKIM، فقط برای ارسال و فقط از داخل خود سرور (`127.0.0.1`). جزئیات: بخش «ایمیل سایت» |
+| فایروال | UFW: SSH، HTTP/HTTPS و پورت‌های ایمیل (۲۵، ۵۸۷، ۹۹۳) باز است. fail2ban جلوی حمله به SSH و ایمیل را می‌گیرد |
+| ایمیل سایت | Postfix + OpenDKIM برای ارسال ایمیل‌های سایت (تأیید، بازیابی رمز، اطلاع‌رسانی). جزئیات: بخش «ایمیل سایت» |
+| وب‌میل | صندوق‌های پستی @soheilsadeghi.com با Dovecot + Roundcube روی `https://mail.soheilsadeghi.com`. جزئیات: بخش «وب‌میل» |
 | پشتیبان | هر روز ساعت ۳:۳۰ UTC (۷ صبح تهران) در `/srv/soheil/backups` (۱۴ روز نگه داشته می‌شود) |
 
 نسخه کامل همه فایل‌های تنظیمات سرور در پوشه [`ops/`](ops) همین مخزن است.
@@ -87,7 +88,33 @@ sudo soheil-update
 - **حساب‌های ساخته‌شده در پنل:** هنرجویی که مدیر در پنل می‌سازد نیازی به تأیید ندارد. مدیر می‌تواند هر حساب را دستی هم تأییدشده کند (تیک «تأیید شده» در صفحه کاربر).
 - **وقتی ایمیل خاموش است** (`soheil-mail off`): ثبت‌نام بدون تأیید انجام می‌شود، ولی بازیابی رمز با ایمیل کار نمی‌کند.
 - **اگر هنرجو ایمیل را نگرفت:** با ورود به حساب، لینک تأیید دوباره ارسال می‌شود (حداکثر هر ۱۰ دقیقه یک بار). پوشه اسپم را هم ببیند.
-- **امنیت:** پورت ۲۵ در فایروال بسته است. سرور ایمیل فقط از داخل خود سرور ایمیل قبول می‌کند و راهی برای سوءاستفاده از بیرون ندارد.
+- **امنیت:** سرور ایمیل **رله باز (open relay) نیست**؛ فرستنده‌های بیرونی فقط می‌توانند به آدرس‌های همین دامنه ایمیل بدهند، نه به جای دیگر. ارسال به بیرون فقط از خود سرور یا با ورود کاربر (پورت ۵۸۷) ممکن است.
+
+## وب‌میل
+
+صندوق‌های پستی واقعی روی دامنه (مثل `info@soheilsadeghi.com`) که ایمیل بیرونی می‌گیرند و از مرورگر خوانده و پاسخ داده می‌شوند.
+
+- **آدرس وب‌میل:** `https://mail.soheilsadeghi.com` (Roundcube، با گواهی SSL جدا).
+- **اجزا:** Postfix (دریافت/ارسال) + Dovecot (IMAP، نگهداری ایمیل‌ها) + Roundcube (رابط مرورگر). همه روی همین سرور. نصب از صفر: `sudo bash /srv/soheil/app/ops/mail/setup-webmail.sh`.
+- **برنامه موبایل/دسکتاپ:** سرور IMAPS (پورت ۹۹۳) و ارسال (SMTP submission، پورت ۵۸۷) هم باز است؛ هر دو با TLS و رمز صندوق.
+
+**برای فعال شدن دریافت ایمیل، یک رکورد DNS لازم است** (یک‌بار): در Cloudflare → DNS → Records → Add record:
+
+| Type | Name | Mail server | Priority | Proxy |
+| --- | --- | --- | --- | --- |
+| MX | `@` | `mail.soheilsadeghi.com` | `10` | DNS only |
+
+تا این رکورد اضافه نشود، ایمیل‌های بیرونی به صندوق‌ها نمی‌رسند. وضعیت را با `sudo soheil-webmail status` ببینید.
+
+**مدیریت صندوق‌ها (روی سرور):**
+
+| کار | دستور |
+| --- | --- |
+| ساخت صندوق | `sudo soheil-webmail add info` (رمز خودکار ساخته و یک‌بار چاپ می‌شود) |
+| تغییر رمز | `sudo soheil-webmail passwd info` |
+| حذف صندوق | `sudo soheil-webmail del info` |
+| فهرست صندوق‌ها | `sudo soheil-webmail list` |
+| وضعیت + رکورد DNS | `sudo soheil-webmail status` |
 
 ## بازگردانی پشتیبان
 
@@ -116,7 +143,8 @@ certbot certonly --nginx -d soheilsadeghi.com -d www.soheilsadeghi.com --deploy-
 ln -s /etc/nginx/sites-available/soheilsadeghi.com /etc/nginx/sites-enabled/ && systemctl reload nginx
 install -m 755 ops/soheil-backup.sh /usr/local/bin/soheil-backup && install -m 755 ops/soheil-update.sh /usr/local/bin/soheil-update
 cp ops/cron.soheil-backup /etc/cron.d/soheil-backup
-bash ops/mail/setup-mail.sh   # سرور ایمیل؛ رکوردهای DNS را چاپ می‌کند → بعد: soheil-mail on
+bash ops/mail/setup-mail.sh      # ایمیل سایت (فقط ارسال)؛ رکوردهای DNS را چاپ می‌کند → بعد: soheil-mail on
+bash ops/mail/setup-webmail.sh   # وب‌میل (دریافت + Roundcube)؛ بعد: رکورد MX را اضافه و soheil-webmail add info
 ufw allow OpenSSH && ufw allow "Nginx Full" && ufw enable
 ```
 
