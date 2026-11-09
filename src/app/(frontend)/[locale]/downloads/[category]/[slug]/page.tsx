@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import RevealScope from "@/components/ui/RevealScope";
 import RichTextView from "@/components/ui/RichTextView";
 import { AccessBadge, DownloadAction, specChips } from "@/components/downloads/DownloadCard";
+import VideoPlayer from "@/components/media/VideoPlayer";
 import { ArrowLeft, CategoryIcon } from "@/components/icons";
 import { fmtNum, href, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -35,6 +36,9 @@ export default async function DownloadPage({ params }: Props) {
   const cover = mediaUrl(d.cover, "card");
   const preview = typeof d.preview === "object" && d.preview ? d.preview.url : undefined;
   const specs = specChips(d, t, locale);
+  // Videos play inline when the viewer may access them (external links aren't proxied).
+  const accessible = d.visibility === "public" || Boolean(user);
+  const videoSrc = category === "videos" && d.source === "file" && accessible ? `/api/stream/${d.id}` : undefined;
 
   return (
     <RevealScope>
@@ -45,7 +49,12 @@ export default async function DownloadPage({ params }: Props) {
             {t.back} {cat.title}
           </Link>
 
-          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_1.2fr]">
+          <div className={`mt-8 grid gap-10 ${videoSrc ? "" : "lg:grid-cols-[1fr_1.2fr]"}`}>
+            {videoSrc ? (
+              <div data-reveal>
+                <VideoPlayer src={videoSrc} poster={cover} title={d.title} />
+              </div>
+            ) : (
             <div data-reveal className="glass overflow-hidden rounded-[2rem]">
               <div className="relative aspect-square bg-gradient-to-br from-cyan/15 via-ink-2 to-neon/25">
                 {cover ? (
@@ -64,6 +73,7 @@ export default async function DownloadPage({ params }: Props) {
                 </div>
               )}
             </div>
+            )}
 
             <div>
               <div data-reveal className="flex flex-wrap items-center gap-2">

@@ -497,3 +497,31 @@ body::after {
 .prose-dj img {
   border-radius: 1rem;
 }
+
+/* Media player seek slider */
+.dj-range {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 999px;
+  cursor: pointer;
+  outline: none;
+}
+
+.dj-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(34 211 238 / 0.4);
+}
+
+.dj-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgb(34 211 238 / 0.4);
+}

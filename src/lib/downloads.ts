@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n/config";
 import type { Download, User } from "@/payload-types";
 import { getPayloadClient } from "@/lib/cms";
 
-export const CATEGORIES = ["mashups", "podcasts", "tracks", "software", "plugins"] as const;
+export const CATEGORIES = ["mashups", "podcasts", "tracks", "videos", "software", "plugins"] as const;
 export type Category = (typeof CATEGORIES)[number];
 export const isCategory = (v: string): v is Category => (CATEGORIES as readonly string[]).includes(v);
 

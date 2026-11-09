@@ -15,12 +15,15 @@ import { Media } from "./payload/collections/Media.ts";
 import { Files } from "./payload/collections/Files.ts";
 import { Downloads } from "./payload/collections/Downloads.ts";
 import { Materials } from "./payload/collections/Materials.ts";
+import { Products } from "./payload/collections/Products.ts";
 import { Pages } from "./payload/collections/Pages.ts";
 import { Requests } from "./payload/collections/Requests.ts";
+import { Bookings } from "./payload/collections/Bookings.ts";
 import { Navigation, Settings } from "./payload/globals/Settings.ts";
 import { Home } from "./payload/globals/Home.ts";
 import { AbletonCourse, DjingCourse } from "./payload/globals/Courses.ts";
 import { Biography, BuyingGuide, ContactPage } from "./payload/globals/Pages.ts";
+import { BookingPage, ProductsPage } from "./payload/globals/Modules.ts";
 import { ChatSettings } from "./payload/globals/Chat.ts";
 import { seed } from "./payload/seed/index.ts";
 import { migrations } from "./migrations/index.ts";
@@ -101,8 +104,8 @@ export default buildConfig({
     defaultLocale: "fa",
     fallback: true,
   },
-  collections: [Downloads, Materials, Pages, Media, Files, Users, Groups, Requests],
-  globals: [Home, DjingCourse, AbletonCourse, BuyingGuide, Biography, ContactPage, Settings, Navigation, ChatSettings],
+  collections: [Downloads, Materials, Products, Pages, Media, Files, Users, Groups, Requests, Bookings],
+  globals: [Home, DjingCourse, AbletonCourse, BuyingGuide, Biography, ContactPage, ProductsPage, BookingPage, Settings, Navigation, ChatSettings],
   editor: lexicalEditor(),
   db: sqliteAdapter({
     client: { url: databaseUri },

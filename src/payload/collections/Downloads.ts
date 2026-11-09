@@ -2,10 +2,11 @@ import type { CollectionConfig } from "payload";
 import { downloadsRead, isStaff } from "../access.ts";
 import { area, check, label, num, sel, slugField, tags, text } from "../fields.ts";
 
-export const DOWNLOAD_CATEGORIES = ["mashups", "podcasts", "tracks", "software", "plugins"] as const;
+export const DOWNLOAD_CATEGORIES = ["mashups", "podcasts", "tracks", "videos", "software", "plugins"] as const;
 export type DownloadCategory = (typeof DOWNLOAD_CATEGORIES)[number];
 
 const audio = ["mashups", "podcasts", "tracks"];
+const timed = ["mashups", "podcasts", "tracks", "videos"]; // things with a duration
 const program = ["software", "plugins"];
 const whenCat = (cats: string[]) => (_: unknown, sibling: Record<string, unknown>) => cats.includes(String(sibling?.category));
 
@@ -38,6 +39,7 @@ export const Downloads: CollectionConfig = {
                 ["mashups", "مشاپ‌ها", "Mashups"],
                 ["podcasts", "پادکست‌ها", "Podcasts"],
                 ["tracks", "ترک‌ها", "Tracks"],
+                ["videos", "ویدیوها", "Videos"],
                 ["software", "نرم‌افزار", "Software"],
                 ["plugins", "پلاگین و VST", "Plugins & VST"],
               ],
@@ -91,7 +93,7 @@ export const Downloads: CollectionConfig = {
             text("genre", "سبک", "Genre", { admin: { condition: whenCat(audio) } }),
             num("bpm", "BPM", "BPM", { admin: { condition: whenCat(["mashups", "tracks"]) } }),
             text("musicalKey", "کلید (Key)", "Key", { admin: { condition: whenCat(["mashups", "tracks"]) } }),
-            text("duration", "مدت", "Duration", { admin: { condition: whenCat(audio) } }),
+            text("duration", "مدت", "Duration", { admin: { condition: whenCat(timed) } }),
             area("tracklist", "ترک‌لیست", "Tracklist", { localized: true, admin: { condition: whenCat(["podcasts"]) } }),
             text("version", "نسخه", "Version", { admin: { condition: whenCat(program) } }),
             sel(

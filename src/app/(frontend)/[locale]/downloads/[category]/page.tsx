@@ -5,9 +5,10 @@ import RevealScope from "@/components/ui/RevealScope";
 import PageHero from "@/components/ui/PageHero";
 import DownloadCard from "@/components/downloads/DownloadCard";
 import CategoryNav from "@/components/downloads/CategoryNav";
+import PodcastPlayer, { type Episode } from "@/components/media/PodcastPlayer";
 import { fmtNum, href, isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { getCurrentUser } from "@/lib/cms";
+import { getCurrentUser, mediaUrl } from "@/lib/cms";
 import { findDownloads, isCategory } from "@/lib/downloads";
 import { pageMeta } from "@/lib/seo";
 import type { Download } from "@/payload-types";
@@ -30,12 +31,42 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const user = await getCurrentUser();
   const result = await findDownloads({ locale, user, category, page, limit: 24 });
   const base = href(locale, `/downloads/${category}`);
+  const loggedIn = Boolean(user);
+
+  // Podcasts get a playlist media player above the grid.
+  const episodes: Episode[] =
+    category === "podcasts"
+      ? (result.docs as Download[])
+          .map((d): Episode | null => {
+            const accessible = d.visibility === "public" || loggedIn;
+            const src = accessible ? (d.source === "link" ? (d.externalUrl ?? undefined) : `/api/stream/${d.id}`) : undefined;
+            if (accessible && !src) return null; // accessible but nothing to play
+            return {
+              id: d.id,
+              title: d.title,
+              cover: mediaUrl(d.cover, "thumb"),
+              meta: d.duration || d.genre || undefined,
+              src,
+              locked: !accessible,
+              loginHref: `${href(locale, "/login")}?next=${encodeURIComponent(href(locale, `/downloads/podcasts/${d.slug}`))}`,
+            };
+          })
+          .filter((e): e is Episode => e !== null)
+      : [];
 
   return (
     <RevealScope>
       <PageHero kicker={c.latin} title={c.title} lead={c.lead}>
         <CategoryNav locale={locale} t={t} active={category} />
       </PageHero>
+
+      {episodes.length > 0 && (
+        <section className="px-5 pb-12 md:px-8" aria-label={c.title}>
+          <div className="mx-auto max-w-4xl" data-reveal>
+            <PodcastPlayer episodes={episodes} t={getDictionary(locale).player} />
+          </div>
+        </section>
+      )}
 
       <section className="px-5 pb-28 md:px-8">
         <div className="mx-auto max-w-7xl">

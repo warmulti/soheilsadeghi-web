@@ -69,12 +69,14 @@ export interface Config {
   collections: {
     downloads: Download;
     materials: Material;
+    products: Product;
     pages: Page;
     media: Media;
     files: File;
     users: User;
     groups: Group;
     requests: Request;
+    bookings: Booking;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,12 +86,14 @@ export interface Config {
   collectionsSelect: {
     downloads: DownloadsSelect<false> | DownloadsSelect<true>;
     materials: MaterialsSelect<false> | MaterialsSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     files: FilesSelect<false> | FilesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     groups: GroupsSelect<false> | GroupsSelect<true>;
     requests: RequestsSelect<false> | RequestsSelect<true>;
+    bookings: BookingsSelect<false> | BookingsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -106,6 +110,8 @@ export interface Config {
     'buying-guide': BuyingGuide;
     biography: Biography;
     'contact-page': ContactPage;
+    'products-page': ProductsPage;
+    'booking-page': BookingPage;
     settings: Setting;
     navigation: Navigation;
     'chat-settings': ChatSetting;
@@ -117,6 +123,8 @@ export interface Config {
     'buying-guide': BuyingGuideSelect<false> | BuyingGuideSelect<true>;
     biography: BiographySelect<false> | BiographySelect<true>;
     'contact-page': ContactPageSelect<false> | ContactPageSelect<true>;
+    'products-page': ProductsPageSelect<false> | ProductsPageSelect<true>;
+    'booking-page': BookingPageSelect<false> | BookingPageSelect<true>;
     settings: SettingsSelect<false> | SettingsSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     'chat-settings': ChatSettingsSelect<false> | ChatSettingsSelect<true>;
@@ -156,7 +164,7 @@ export interface UserAuthOperations {
 export interface Download {
   id: number;
   title: string;
-  category: 'mashups' | 'podcasts' | 'tracks' | 'software' | 'plugins';
+  category: 'mashups' | 'podcasts' | 'tracks' | 'videos' | 'software' | 'plugins';
   cover?: (number | null) | Media;
   excerpt?: string | null;
   description?: {
@@ -313,6 +321,59 @@ export interface Material {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  title: string;
+  image?: (number | null) | Media;
+  gallery?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  excerpt?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  tags?: string[] | null;
+  price?: string | null;
+  oldPrice?: string | null;
+  badge?: string | null;
+  buy: {
+    type: 'link' | 'telegram' | 'whatsapp' | 'contact';
+    url?: string | null;
+    buttonLabel?: string | null;
+  };
+  /**
+   * Leave empty to generate from the title.
+   */
+  slug?: string | null;
+  featured?: boolean | null;
+  /**
+   * Lower shows first.
+   */
+  order?: number | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * Custom pages served at /slug; add them to the menu in Navigation.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -446,6 +507,27 @@ export interface Request {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings".
+ */
+export interface Booking {
+  id: number;
+  name: string;
+  phone: string;
+  eventType?: string | null;
+  eventDate?: string | null;
+  city?: string | null;
+  venue?: string | null;
+  guests?: number | null;
+  budget?: string | null;
+  message?: string | null;
+  locale?: string | null;
+  status?: ('new' | 'contacted' | 'confirmed' | 'done' | 'cancelled') | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -477,6 +559,10 @@ export interface PayloadLockedDocument {
         value: number | Material;
       } | null)
     | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
         relationTo: 'pages';
         value: number | Page;
       } | null)
@@ -499,6 +585,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'requests';
         value: number | Request;
+      } | null)
+    | ({
+        relationTo: 'bookings';
+        value: number | Booking;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -591,6 +681,40 @@ export interface MaterialsSelect<T extends boolean = true> {
   audience?: T;
   groups?: T;
   order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  title?: T;
+  image?: T;
+  gallery?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  excerpt?: T;
+  description?: T;
+  tags?: T;
+  price?: T;
+  oldPrice?: T;
+  badge?: T;
+  buy?:
+    | T
+    | {
+        type?: T;
+        url?: T;
+        buttonLabel?: T;
+      };
+  slug?: T;
+  featured?: T;
+  order?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -769,6 +893,26 @@ export interface RequestsSelect<T extends boolean = true> {
   service?: T;
   format?: T;
   time?: T;
+  message?: T;
+  locale?: T;
+  status?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings_select".
+ */
+export interface BookingsSelect<T extends boolean = true> {
+  name?: T;
+  phone?: T;
+  eventType?: T;
+  eventDate?: T;
+  city?: T;
+  venue?: T;
+  guests?: T;
+  budget?: T;
   message?: T;
   locale?: T;
   status?: T;
@@ -1255,6 +1399,59 @@ export interface ContactPage {
       | null;
     formats?: string[] | null;
     messageHeader?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products-page".
+ */
+export interface ProductsPage {
+  id: number;
+  kicker?: string | null;
+  title: string;
+  lead?: string | null;
+  empty?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking-page".
+ */
+export interface BookingPage {
+  id: number;
+  kicker?: string | null;
+  title: string;
+  lead?: string | null;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Options for the event-type field in the form.
+   */
+  eventTypes?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  success?: {
+    title?: string | null;
+    text?: string | null;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1859,6 +2056,44 @@ export interface ContactPageSelect<T extends boolean = true> {
             };
         formats?: T;
         messageHeader?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products-page_select".
+ */
+export interface ProductsPageSelect<T extends boolean = true> {
+  kicker?: T;
+  title?: T;
+  lead?: T;
+  empty?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "booking-page_select".
+ */
+export interface BookingPageSelect<T extends boolean = true> {
+  kicker?: T;
+  title?: T;
+  lead?: T;
+  intro?: T;
+  eventTypes?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  success?:
+    | T
+    | {
+        title?: T;
+        text?: T;
       };
   updatedAt?: T;
   createdAt?: T;

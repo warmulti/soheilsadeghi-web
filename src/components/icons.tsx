@@ -302,6 +302,24 @@ export function PlayIcon({ className = "h-4 w-4" }: IconProps) {
   );
 }
 
+export function PauseIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      <rect x="6.5" y="5" width="3.5" height="14" rx="1" />
+      <rect x="14" y="5" width="3.5" height="14" rx="1" />
+    </svg>
+  );
+}
+
+export function SkipIcon({ className = "h-4 w-4", dir = "next" }: IconProps & { dir?: "next" | "prev" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor" style={dir === "prev" ? { transform: "scaleX(-1)" } : undefined}>
+      <path d="M6 5.5v13l9-6.5Z" />
+      <rect x="16" y="5" width="2.5" height="14" rx="1" />
+    </svg>
+  );
+}
+
 export function FileIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...ui}>
@@ -334,6 +352,14 @@ export function CategoryIcon({ name, className = "h-6 w-6" }: { name: string; cl
           <path d="M9 18V5.5l10-2v12.5" />
           <circle cx="6.5" cy="18" r="2.5" />
           <circle cx="16.5" cy="16" r="2.5" />
+        </svg>
+      );
+    case "videos":
+      return (
+        <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...ui}>
+          <rect x="3" y="5" width="18" height="14" rx="2.5" />
+          <path d="M3 9h18M7 5v4M17 5v4M7 19v-4M17 19v-4" />
+          <path d="M11 11.5v3l2.5-1.5Z" fill="currentColor" />
         </svg>
       );
     case "software":
